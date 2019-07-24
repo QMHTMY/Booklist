@@ -23,8 +23,8 @@ Linux下获取豆瓣各门类下的高质量书籍信息并整理成书单(pdf�
 
 # 依赖 #
 <li>请使用python3</li>
-<li>请使用pip2安装依赖包</li>
-	$ sudo pip2 install -r requirement.txt
+<li>请安装依赖包</li>
+	$ sudo pip3 install -r requirement.txt
 
 # 书单示例 #
 ![ekqGXF.png](https://s2.ax1x.com/2019/07/23/ekqGXF.png)
