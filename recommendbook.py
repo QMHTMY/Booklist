@@ -28,8 +28,8 @@ class DoubanBookList():
         self.datetime = self.getDateTime()                          #pdf书单创建日期
         self.storedir = '/home/shieber/Files/gitp/Douban/booklist/' #书单存储位置
         self.orders   = {                                           #系统调用的指令
-                           'mkdocx':'Text2docx -a',
-                           'mkpdfs':'libreoffice --invisible --convert-to pdf *.docx'
+                          'mkdocx':'Text2docx -a 1>/dev/null 2>&1',
+                          'mkpdfs':'libreoffice --convert-to pdf *.docx 1>/dev/null 2>&1'
                         }
         self.headers  = {
                            'User-Agent':'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; \
