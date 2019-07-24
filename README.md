@@ -15,10 +15,10 @@ Linux下获取豆瓣各门类下的高质量书籍信息并整理成书单(pdf�
 	  $ sudo mv Text2docx /usr/bin/
 	2.建立存放书单pdf文件的目录,如'/home/username/file/booklist/'
 	  $ sudo mkdir /home/username/file/booklist/
-	3.修改Booklist/recommendbook.py的self.save_fold(第23行)为上述目录(注意最后的斜杠要加上) 
+	3.修改Booklist/booklist.py的self.save_fold(第23行)为上述目录(注意最后的斜杠要加上) 
 	4.执行
 	  $ python3 booklist.py
-	5.查看
+	5.最后
 	  直接到/home/username/file/booklis/下查看书单pdf文件
 
 # 依赖 #
