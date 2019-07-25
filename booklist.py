@@ -143,13 +143,13 @@ class DoubanBookList():
         else:
             pass
 
-    def fileTransfer(self,success,order):
+    def fileTransfer(self,success,key):
         if not success:
             return False
 
         cwd = getcwd()
         chdir(self.storedir)
-        call(order,shell=True)
+        call(self.order[key],shell=True)
         chdir(cwd)
 
     def save2Txt(self,url,bookinfos):
@@ -181,6 +181,7 @@ class DoubanBookList():
         if urls:
             if len(urls) > num:
                 urls = urls[:num]
+
             if multi:
                 pool = Pool(5)
                 for url in urls:
@@ -233,6 +234,6 @@ if __name__ == "__main__":
     cateurls = booklist.getBookCateUrls() 
     #num下载书单个数，multi多线程，proxy ip代理
     success  = booklist.multiSave(cateurls,num=5,multi=False,proxy=False) 
-    booklist.fileTransfer(success,self.order['mkdocx'])
-    booklist.fileTransfer(success,self.order['mkpdfs'])
-    booklist.deleteTxtDocx(self,delete=False)
+    booklist.fileTransfer(success,key='mkdocx')
+    booklist.fileTransfer(success,key='mkpdfs')
+    booklist.deleteTxtDocx(delete=True)
