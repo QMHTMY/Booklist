@@ -140,8 +140,8 @@ class DoubanBookList():
         if delete:
             cwd = getcwd()
             chdir(self.storedir)
-            call('remove *.txt  >/dev/null 2>&1',shell=True) 
-            call('remove *.docx >/dev/null 2>&1',shell=True) 
+            call('rm *.txt  >/dev/null 2>&1',shell=True) 
+            call('rm *.docx >/dev/null 2>&1',shell=True) 
             chdir(cwd)
 
     def fileTransfer(self,success,key):
@@ -177,11 +177,11 @@ class DoubanBookList():
         bookinfos = bookinfo1 + bookinfo2
         self.save2Txt(url,bookinfos)
 
-    def multiSave(self,urls,num=10,multi=False,proxy=False):
+    def multiSave(self,urls,s=1,e=145,multi=False,proxy=False):
         '''多进程循环获取所有书籍信息并保存'''
         if urls:
-            if num < len(urls):
-                urls = urls[:num]
+            if e < len(urls):
+                urls = urls[s-1:e]
 
             if multi:
                 pool = Pool(5)
@@ -256,13 +256,20 @@ class DoubanBookList():
             return []
 
 if __name__ == "__main__":
+    #s起始书单序列号，e截止书单序列号 (s最小1,e最大145)，multi:多线程，proxy:ip代理
+
+    # Step I 下载书籍信息到txt文件
     start = time.time()
     booklist = DoubanBookList()              
     cateurls = booklist.getBookCateUrls() 
-    #num下载书单个数(共145个)，multi多线程，proxy ip代理
-    success  = booklist.multiSave(cateurls,num=5,multi=False,proxy=False) 
+    success  = booklist.multiSave(cateurls,s=1,e=145,multi=False,proxy=False) 
+    end = time.time()
+    print('下载耗时：%.2f(s)'%(end-start))
+
+    # Step II 转换txt为pdf并删除中间文件
+    start = time.time()
     booklist.fileTransfer(success,key='txt2docx')
     booklist.fileTransfer(success,key='docx2pdf')
     booklist.deleteTxtDocx(delete=True)
     end = time.time()
-    print('耗时：%.2f(s)'%(end-start))
+    print('转换耗时：%.2f(s)'%(end-start))
