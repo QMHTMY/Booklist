@@ -21,8 +21,8 @@
 #    All Rights Reserved!
 
 import re,time
-import requests
 import random
+import requests
 import datetime
 from os import chdir,getcwd
 from bs4 import BeautifulSoup as Soup
@@ -57,7 +57,6 @@ class DoubanBookList():
     def getDateTime(self):
         '''获取当前日期'''
         time = datetime.datetime.now()
-
         if time.month < 10:
             mnth = ''.join(['0',str(time.month)])  
         else:
@@ -93,31 +92,30 @@ class DoubanBookList():
             score = self.getSpecificInfo(book.find('span',class_='rating_nums'))
             descs = self.getSpecificInfo(book.find('p'))
 
-            info  = {
-                        'title':title,
-                        'authr':authr,
-                        'score':score,
-                        'descs':descs
-                    }
-
+            info  ={
+                    'title':title,
+                    'authr':authr,
+                    'score':score,
+                    'descs':descs
+                   }
             Info.append(info)
 
         return Info 
 
-    def getBookInfo(self,pageurls):
+    def getBookInfo(self,pageurls,proxy):
         '''返回所有书籍的详细信息列表'''
         if not pageurls:
             return []
 
         bookinfo = []
         for url in pageurls:
-            soup = self.getFromUrl(url)
+            soup = self.getFromUrl(url,proxy)
             info = self.getInfo(soup)
             bookinfo += info
         return bookinfo 
 
     def getInfoPlusPageUrls(self,url):
-        soup = self.getFromUrl(url)
+        soup = self.getFromUrl(url,proxy=False)
         if not soup:
             return [],[]
 
@@ -160,31 +158,32 @@ class DoubanBookList():
                 txtObj.write(''.join(['　　简介：', infodic['descs'], '\n']))
                 txtObj.write('\n')                                                  #书间空行
 
-    def saveBookList(self,url):
+    def saveBookList(self,url,proxy):
         '''获取书籍信息并保存'''
         bookinfo1, pageurls = self.getInfoPlusPageUrls(url)
-        bookinfo2 = self.getBookInfo(pageurls)
+        bookinfo2 = self.getBookInfo(pageurls,proxy)
         bookinfos = bookinfo1 + bookinfo2
         self.save2Txt(url,bookinfos)
 
-    def multiSaveBookList(self,urls):
+    def multiSaveBookList(self,urls,multi=False,proxy=False):
         '''多进程循环获取所有书籍信息并保存'''
         if urls:
-            pool = Pool(5)
-            for url in urls:
-                pool.apply_async(self.saveBookList,(url,))
-            pool.close()
-            pool.join()
-
-            return True
-            #for url in urls[:10]:
-            #    self.saveBookList(url)
+            if multi:
+                pool = Pool(5)
+                for url in urls:
+                    pool.apply_async(self.saveBookList,(url,proxy))
+                pool.close()
+                pool.join()
+                return True
+            else:
+                for url in urls:
+                    self.saveBookList(url,proxy)
         else:
             return False
 
     def getBookCateUrls(self):
         '''获取所有分类的主页url'''
-        soup = getFromUrl(self.rooturl1)
+        soup = self.getFromUrl(self.rooturl1,proxy=False)
         if not soup:
             return []
 
@@ -193,17 +192,16 @@ class DoubanBookList():
         for cate in bookcates:
             bookurl = ''.join([self.rooturl2, cate['href']])
             bookurls.append(bookurl) 
-
-        return bookurls[1:] #第1个url不需要
+        return bookurls[1:]                  #第1个url不需要
 
     def getFromUrl(self,url,proxy=False):
         '''prox控制是否开启代理'''
         requests.session().keep_alive = False
-        if not proxy:
-            resp = requests.get(url,headers=self.headers)
-        else:
+        if proxy:
             prox = {'https':random.choice(self.http_ips)}
             resp = requests.get(url,headers=self.headers,proxies=prox)
+        else:
+            resp = requests.get(url,headers=self.headers)
 
         if 200 == resp.status_code:
             resp.encoding = 'utf-8'
@@ -216,8 +214,9 @@ class DoubanBookList():
             return []
 
 if __name__ == "__main__":
-    booklist = DoubanBookList()              #可修改，比如author='Trump' 
-    cateurls = booklist.getBookCateUrls()    #2019.07.23有145个图书类别
-    success  = booklist.multiSaveBookList(cateurls)
+    booklist = DoubanBookList()              
+    cateurls = booklist.getBookCateUrls()    #145个图书类别
+    success  = booklist.multiSaveBookList(cateurls,multi=False,proxy=False)
+    #multi=True 开启多线程，proxy=True 开启代理
     booklist.fileTransfer(success,self.orders['mkdocx'])
     booklist.fileTransfer(success,self.orders['mkpdfs'])
