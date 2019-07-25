@@ -257,10 +257,8 @@ if __name__ == "__main__":
     booklist = DoubanBookList()              
     #cateurls 145个图书类别
     cateurls = booklist.getBookCateUrls() 
-    for url in cateurls:
-        print(url)
     #num下载书单个数，multi多线程，proxy ip代理
-    #success  = booklist.multiSave(cateurls,num=5,multi=False,proxy=False) 
-    #booklist.fileTransfer(success,key='mkdocx')
-    #booklist.fileTransfer(success,key='mkpdfs')
-    #booklist.deleteTxtDocx(delete=True)
+    success  = booklist.multiSave(cateurls,num=5,multi=False,proxy=False) 
+    booklist.fileTransfer(success,key='mkdocx')
+    booklist.fileTransfer(success,key='mkpdfs')
+    booklist.deleteTxtDocx(delete=True)
