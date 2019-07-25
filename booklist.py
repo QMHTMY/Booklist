@@ -35,6 +35,7 @@ class DoubanBookList():
     def __init__(self,author='Shieber'):
         self.rooturl1 = 'https://book.douban.com/tag'               #分类图书主页
         self.rooturl2 = 'https://book.douban.com'                   #构造分页url的根url
+        self.download = 5                                           #下载进程数 
         self.maxpage  = 20                                          #获取该类书最大页数
         self.heading  = '豆瓣读书推荐书单'                          #pdf书单抬头信息 
         self.author   = author                                      #pdf书单作者姓名
@@ -184,7 +185,7 @@ class DoubanBookList():
                 urls = urls[s-1:e]
 
             if multi:
-                pool = Pool(5)
+                pool = Pool(self.download)
                 for url in urls:
                     pool.apply_async(self.saveBookList,(url,proxy))
                 pool.close()
