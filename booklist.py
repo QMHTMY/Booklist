@@ -20,13 +20,13 @@
 #    Copyright 2019 
 #    All Rights Reserved!
 
-import re,time
+import re,time,csv
 import random
 import requests
 import datetime
 from os import chdir,getcwd
 from bs4 import BeautifulSoup as Soup
-from os.path import basename 
+from os.path import basename, exists
 from subprocess import call
 from multiprocessing import Pool
 
@@ -45,9 +45,9 @@ class DoubanBookList():
                           'mkpdfs':'libreoffice --convert-to pdf *.docx 1>/dev/null 2>&1'
                         }
         self.headers  = {
-                           'User-Agent':'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; \
-                            rv:68.0) Gecko/20100101 Firefox/68.0',
-                           'Connection':'close'
+                          'User-Agent':'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; \
+                           rv:68.0) Gecko/20100101 Firefox/68.0',
+                          'Connection':'close'
                         } 
         self.ip_list  = ['144.217.229.155', '49.51.195.24', '192.99.191.239', \
                          '49.51.68.122', '49.51.70.42', '101.4.136.34', \
@@ -195,17 +195,42 @@ class DoubanBookList():
         else:
             return False
 
+    def save2csv(self,urls):
+        csvname  = self.storedir + 'category.csv'
+        if not exists(csvname):
+            with open(csvname,'w',newline='') as csvObj:
+                csv_writer = csv.writer(csvObj,dialect='excel')
+                for i,url in enumerate(urls):
+                    csv_writer.writerow([i,url])
+
+    def readFromcsv(self,csvname):
+        bookurls = []
+        with open(csvname,encoding='utf-8') as csvObj:
+            csv_reader = csv.reader(csvObj)
+            for row in csv_reader:
+                bookurls.append(row[1]) 
+        return bookurls
+
     def getBookCateUrls(self):
-        '''获取所有分类的主页url'''
+        '''
+           获取所有分类的主页url
+           若本地存储有就读取本地的
+        '''
+        bookurls = []
+        csvname  = self.storedir + 'category.csv'
+        if exists(csvname):
+            return self.readFromcsv(csvname)
+
         soup = self.getFromUrl(self.rooturl1,proxy=False)
         if not soup:
             return []
 
-        bookurls  = []
         bookcates = soup.find_all('a',href=re.compile(r'/tag/.*'))
         for cate in bookcates:
             bookurl = ''.join([self.rooturl2, cate['href']])
             bookurls.append(bookurl) 
+        
+        self.save2csv(bookurls[1:])               
         return bookurls[1:]                  #第1个url不需要
 
     def getFromUrl(self,url,proxy=False):
@@ -232,8 +257,10 @@ if __name__ == "__main__":
     booklist = DoubanBookList()              
     #cateurls 145个图书类别
     cateurls = booklist.getBookCateUrls() 
+    for url in cateurls:
+        print(url)
     #num下载书单个数，multi多线程，proxy ip代理
-    success  = booklist.multiSave(cateurls,num=5,multi=False,proxy=False) 
-    booklist.fileTransfer(success,key='mkdocx')
-    booklist.fileTransfer(success,key='mkpdfs')
-    booklist.deleteTxtDocx(delete=True)
+    #success  = booklist.multiSave(cateurls,num=5,multi=False,proxy=False) 
+    #booklist.fileTransfer(success,key='mkdocx')
+    #booklist.fileTransfer(success,key='mkpdfs')
+    #booklist.deleteTxtDocx(delete=True)
