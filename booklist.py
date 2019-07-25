@@ -41,9 +41,11 @@ class DoubanBookList():
         self.datetime = self.getDateTime()                          #pdf书单创建日期
         self.storedir = '/home/shieber/Files/gitp/Douban/booklist/' #书单存储位置
         self.order    = {                                           #系统调用的指令
-                          'mkdocx':'Text2docx -a 1>/dev/null 2>&1',
-                          'mkpdfs':'libreoffice --convert-to pdf *.docx 1>/dev/null 2>&1'
+                          'txt2docx':'Text2docx -a 1>/dev/null 2>&1',
+                          'docx2pdf':'libreoffice --convert-to pdf *.docx 1>/dev/null 2>&1',
+                          'txt2pdf' :'Text2pdf -a 1>/dev/null 2>&1'
                         }
+                         
         self.headers  = {
                           'User-Agent':'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; \
                            rv:68.0) Gecko/20100101 Firefox/68.0',
@@ -74,7 +76,7 @@ class DoubanBookList():
         '''去除文字中的空格和换行符'''
         if info:
             info = str(info.getText())
-            info = item.replace(' ','').replace('\n','')
+            info = info.replace(' ','').replace('\n','')
         else:
             info = '暂无'
         return info
@@ -112,6 +114,7 @@ class DoubanBookList():
             soup = self.getFromUrl(url,proxy)
             info = self.getInfo(soup)
             bookinfo += info
+            time.sleep(0.2)                      #强制等待，避免频繁抓取
         return bookinfo 
 
     def getInfoPlusPageUrls(self,url):
@@ -137,11 +140,9 @@ class DoubanBookList():
         if delete:
             cwd = getcwd()
             chdir(self.storedir)
-            call('rm *.txt  >/dev/null 2>&1',shell=True) 
-            call('rm *.docx >/dev/null 2>&1',shell=True) 
+            call('remove *.txt  >/dev/null 2>&1',shell=True) 
+            call('remove *.docx >/dev/null 2>&1',shell=True) 
             chdir(cwd)
-        else:
-            pass
 
     def fileTransfer(self,success,key):
         if not success:
@@ -179,7 +180,7 @@ class DoubanBookList():
     def multiSave(self,urls,num=10,multi=False,proxy=False):
         '''多进程循环获取所有书籍信息并保存'''
         if urls:
-            if len(urls) > num:
+            if num < len(urls):
                 urls = urls[:num]
 
             if multi:
@@ -192,6 +193,7 @@ class DoubanBookList():
             else:
                 for url in urls:
                     self.saveBookList(url,proxy)
+                return True
         else:
             return False
 
@@ -235,13 +237,13 @@ class DoubanBookList():
 
     def getFromUrl(self,url,proxy=False):
         '''prox控制是否开启代理'''
-        time.sleep(0.2)                      #强制等待，避免频繁抓取
         requests.session().keep_alive = False
         if proxy:
             prox = {'https':random.choice(self.http_ips)}
             resp = requests.get(url,headers=self.headers,proxies=prox)
         else:
             resp = requests.get(url,headers=self.headers)
+
 
         if 200 == resp.status_code:
             resp.encoding = 'utf-8'
@@ -254,11 +256,13 @@ class DoubanBookList():
             return []
 
 if __name__ == "__main__":
+    start = time.time()
     booklist = DoubanBookList()              
-    #cateurls 145个图书类别
     cateurls = booklist.getBookCateUrls() 
-    #num下载书单个数，multi多线程，proxy ip代理
+    #num下载书单个数(共145个)，multi多线程，proxy ip代理
     success  = booklist.multiSave(cateurls,num=5,multi=False,proxy=False) 
-    booklist.fileTransfer(success,key='mkdocx')
-    booklist.fileTransfer(success,key='mkpdfs')
+    booklist.fileTransfer(success,key='txt2docx')
+    booklist.fileTransfer(success,key='docx2pdf')
     booklist.deleteTxtDocx(delete=True)
+    end = time.time()
+    print('耗时：%.2f(s)'%(end-start))
