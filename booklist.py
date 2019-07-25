@@ -40,7 +40,7 @@ class DoubanBookList():
         self.author   = author                                      #pdf书单作者姓名
         self.datetime = self.getDateTime()                          #pdf书单创建日期
         self.storedir = '/home/shieber/Files/gitp/Douban/booklist/' #书单存储位置
-        self.orders   = {                                           #系统调用的指令
+        self.order    = {                                           #系统调用的指令
                           'mkdocx':'Text2docx -a 1>/dev/null 2>&1',
                           'mkpdfs':'libreoffice --convert-to pdf *.docx 1>/dev/null 2>&1'
                         }
@@ -132,6 +132,17 @@ class DoubanBookList():
 
         return bookinfo, pageurls
 
+    def deleteTxtDocx(self,delete=False):
+        '''删除中间产生的txt,docx文件'''
+        if delete:
+            cwd = getcwd()
+            chdir(self.storedir)
+            call('rm *.txt  >/dev/null 2>&1',shell=True) 
+            call('rm *.docx >/dev/null 2>&1',shell=True) 
+            chdir(cwd)
+        else:
+            pass
+
     def fileTransfer(self,success,order):
         if not success:
             return False
@@ -165,9 +176,11 @@ class DoubanBookList():
         bookinfos = bookinfo1 + bookinfo2
         self.save2Txt(url,bookinfos)
 
-    def multiSaveBookList(self,urls,multi=False,proxy=False):
+    def multiSave(self,urls,num=10,multi=False,proxy=False):
         '''多进程循环获取所有书籍信息并保存'''
         if urls:
+            if len(urls) > num:
+                urls = urls[:num]
             if multi:
                 pool = Pool(5)
                 for url in urls:
@@ -196,6 +209,7 @@ class DoubanBookList():
 
     def getFromUrl(self,url,proxy=False):
         '''prox控制是否开启代理'''
+        time.sleep(0.2)                      #强制等待，避免频繁抓取
         requests.session().keep_alive = False
         if proxy:
             prox = {'https':random.choice(self.http_ips)}
@@ -215,8 +229,10 @@ class DoubanBookList():
 
 if __name__ == "__main__":
     booklist = DoubanBookList()              
-    cateurls = booklist.getBookCateUrls()    #145个图书类别
-    success  = booklist.multiSaveBookList(cateurls,multi=False,proxy=False)
-    #multi=True 开启多线程，proxy=True 开启代理
-    booklist.fileTransfer(success,self.orders['mkdocx'])
-    booklist.fileTransfer(success,self.orders['mkpdfs'])
+    #cateurls 145个图书类别
+    cateurls = booklist.getBookCateUrls() 
+    #num下载书单个数，multi多线程，proxy ip代理
+    success  = booklist.multiSave(cateurls,num=5,multi=False,proxy=False) 
+    booklist.fileTransfer(success,self.order['mkdocx'])
+    booklist.fileTransfer(success,self.order['mkpdfs'])
+    booklist.deleteTxtDocx(self,delete=False)
