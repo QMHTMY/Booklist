@@ -35,7 +35,7 @@ class DoubanBookList():
     def __init__(self,author='Shieber'):
         self.rooturl1 = 'https://book.douban.com/tag'               #分类图书主页
         self.rooturl2 = 'https://book.douban.com'                   #构造分页url的根url
-        self.download = 5                                           #下载进程数 
+        self.download = 10                                          #下载进程数 
         self.maxpage  = 20                                          #获取该类书最大页数
         self.heading  = '豆瓣读书推荐书单'                          #pdf书单抬头信息 
         self.author   = author                                      #pdf书单作者姓名
@@ -263,9 +263,9 @@ if __name__ == "__main__":
     start = time.time()
     booklist = DoubanBookList()              
     cateurls = booklist.getBookCateUrls() 
-    success  = booklist.multiSave(cateurls,s=1,e=145,multi=False,proxy=False) 
+    success  = booklist.multiSave(cateurls,s=1,e=len(cateurls),multi=True,proxy=False) 
     end = time.time()
-    print('下载耗时：%.2f(s)'%(end-start))
+    print('下载耗时：%.2f(m)'%(end-start)/60)
 
     # Step II 转换txt为pdf并删除中间文件
     start = time.time()
@@ -273,4 +273,4 @@ if __name__ == "__main__":
     booklist.fileTransfer(success,key='docx2pdf')
     booklist.deleteTxtDocx(delete=True)
     end = time.time()
-    print('转换耗时：%.2f(s)'%(end-start))
+    print('转换耗时：%.2f(m)'%(end-start)/60)
