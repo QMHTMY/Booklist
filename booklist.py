@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-# -*- coding: utf-8 -*-
+#-*- coding: utf-8 -*-
 #
 #    Author: Shieber
 #    Date: 2019.07.23
@@ -29,22 +29,25 @@ from bs4 import BeautifulSoup as Soup
 from os.path import basename, exists
 from subprocess import call
 from multiprocessing import Pool
+from getips import getIpList, getRandomIp
+
 
 class DoubanBookList():
     '''豆瓣图书分类生产器'''
     def __init__(self,author='Shieber'):
+        self.proxy_url= 'https://ip.ihuan.me/'
         self.rooturl1 = 'https://book.douban.com/tag'               #分类图书主页
         self.rooturl2 = 'https://book.douban.com'                   #构造分页url的根url
-        self.download = 10                                          #下载进程数 
+        self.download = 0                                           #下载个数 
+        self.process  = 20                                          #下载进程数 
         self.maxpage  = 20                                          #获取该类书最大页数
         self.heading  = '豆瓣读书推荐书单'                          #pdf书单抬头信息 
         self.author   = author                                      #pdf书单作者姓名
         self.datetime = self.getDateTime()                          #pdf书单创建日期
-        self.storedir = '/home/shieber/Files/gitp/Douban/booklist/' #书单存储位置
+        self.storedir = '/home/username/Douban/booklist/'           #书单存储位置
         self.order    = {                                           #系统调用的指令
                           'txt2docx':'Text2docx -a 1>/dev/null 2>&1',
                           'docx2pdf':'libreoffice --convert-to pdf *.docx 1>/dev/null 2>&1',
-                          'txt2pdf' :'Text2pdf -a 1>/dev/null 2>&1'
                         }
                          
         self.headers  = {
@@ -52,10 +55,8 @@ class DoubanBookList():
                            rv:68.0) Gecko/20100101 Firefox/68.0',
                           'Connection':'close'
                         } 
-        self.ip_list  = ['144.217.229.155', '49.51.195.24', '192.99.191.239', \
-                         '49.51.68.122', '49.51.70.42', '101.4.136.34', \
-                         '124.192.27.246', '192.95.3.198', '203.195.168.154']
-        self.http_ips = ['https://'+ip for ip in self.ip_list]
+        self.ip_list  = getIpList(self.proxy_url)
+
 
     def getDateTime(self):
         '''获取当前日期'''
@@ -112,10 +113,10 @@ class DoubanBookList():
 
         bookinfo = []
         for url in pageurls:
-            soup = self.getFromUrl(url,proxy)
+            proxies = getRandomIp(self.ip_list)
+            soup = self.getFromUrl(url,proxy,proxies)
             info = self.getInfo(soup)
             bookinfo += info
-            time.sleep(0.2)                      #强制等待，避免频繁抓取
         return bookinfo 
 
     def getInfoPlusPageUrls(self,url):
@@ -141,8 +142,8 @@ class DoubanBookList():
         if delete:
             cwd = getcwd()
             chdir(self.storedir)
-            call('rm *.txt  >/dev/null 2>&1',shell=True) 
-            call('rm *.docx >/dev/null 2>&1',shell=True) 
+            call('remove *.txt  >/dev/null 2>&1',shell=True) 
+            call('remove *.docx >/dev/null 2>&1',shell=True) 
             chdir(cwd)
 
     def fileTransfer(self,success,key):
@@ -181,20 +182,28 @@ class DoubanBookList():
     def multiSave(self,urls,s=1,e=145,multi=False,proxy=False):
         '''多进程循环获取所有书籍信息并保存'''
         if urls:
-            if e < len(urls):
+            if 0< e < len(urls):
                 urls = urls[s-1:e]
+            else:
+                urls = urls[s-1:len(urls)]
+
+            print('开始下载豆瓣各分类书籍信息，这可能需要一些时间......')
+            start = time.time()
 
             if multi:
-                pool = Pool(self.download)
+                pool = Pool(self.process)
                 for url in urls:
                     pool.apply_async(self.saveBookList,(url,proxy))
                 pool.close()
                 pool.join()
-                return True
             else:
                 for url in urls:
                     self.saveBookList(url,proxy)
-                return True
+
+            self.download += len(urls)
+            end = time.time()
+            print('下载耗时：%.2f(m)，共下载%d个文件。'%((end-start)/60,self.download))
+            return True
         else:
             return False
 
@@ -234,17 +243,16 @@ class DoubanBookList():
             bookurls.append(bookurl) 
         
         self.save2csv(bookurls[1:])               
-        return bookurls[1:]                  #第1个url不需要
+        return bookurls[1:]                   #第1个url不需要
 
-    def getFromUrl(self,url,proxy=False):
+    def getFromUrl(self,url,proxy=False,proxies=None):
         '''prox控制是否开启代理'''
+        #time.sleep(0.5)                      #强制等待，避免频繁抓取
         requests.session().keep_alive = False
         if proxy:
-            prox = {'https':random.choice(self.http_ips)}
-            resp = requests.get(url,headers=self.headers,proxies=prox)
+            resp = requests.get(url,headers=self.headers,proxies=proxies)
         else:
             resp = requests.get(url,headers=self.headers)
-
 
         if 200 == resp.status_code:
             resp.encoding = 'utf-8'
@@ -258,19 +266,16 @@ class DoubanBookList():
 
 if __name__ == "__main__":
     #s起始书单序列号，e截止书单序列号 (s最小1,e最大145)，multi:多线程，proxy:ip代理
-
-    # Step I 下载书籍信息到txt文件
-    start = time.time()
+    #Step I 下载书籍信息到txt文件
     booklist = DoubanBookList()              
     cateurls = booklist.getBookCateUrls() 
     success  = booklist.multiSave(cateurls,s=1,e=len(cateurls),multi=True,proxy=False) 
-    end = time.time()
-    print('下载耗时：%.2f(m)'%(end-start)/60)
 
-    # Step II 转换txt为pdf并删除中间文件
+    #Step II 转换txt为pdf并删除中间文件
     start = time.time()
+    success = True
     booklist.fileTransfer(success,key='txt2docx')
     booklist.fileTransfer(success,key='docx2pdf')
     booklist.deleteTxtDocx(delete=True)
-    end = time.time()
-    print('转换耗时：%.2f(m)'%(end-start)/60)
+    end   = time.time()
+    print('转换耗时：%.2f(m)。'%((end-start)/60))

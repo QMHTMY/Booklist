@@ -8,11 +8,12 @@ Linux下获取豆瓣不同种类书籍信息并整理成书单(pdf格式)。许�
 <li>4.删除.txt和.docx等缀余文件</li>
 
 # 使用 #
-	1.首先将Text2docx放到/usr/bin/下
-	  $ sudo chown root Text2docx
-	  $ sudo chgrp root Text2docx
-	  $ sudo chmod 755  Text2docx
+	1.首先将Text2docx和Docx2pdf放到/usr/bin/下
+	  $ sudo chown root Text2docx Docx2pdf
+	  $ sudo chgrp root Text2docx Docx2pdf
+	  $ sudo chmod 755  Text2docx Docx2pdf
 	  $ sudo mv Text2docx /usr/bin/
+	  $ sudo mv Docx2pdf  /usr/bin/
 	2.建立存放书单pdf文件的目录,如'/home/username/file/booklist/'
 	  $ sudo mkdir /home/username/file/booklist/
 	3.修改Booklist/booklist.py的self.save_fold(第23行)为上述目录(注意最后的斜杠要加上) 
