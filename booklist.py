@@ -26,10 +26,10 @@ import requests
 import datetime
 from os import chdir,getcwd
 from bs4 import BeautifulSoup as Soup
+from getips import getIpList, getRandomIp
 from os.path import basename, exists
 from subprocess import call
 from multiprocessing import Pool
-from getips import getIpList, getRandomIp
 
 
 class DoubanBookList():
