@@ -9,8 +9,7 @@ import requests
 from bs4 import BeautifulSoup as Soup
 from random import randint
 from multiprocessing import Pool
-#聚合数据ID JHa2ae75ec2ca464a35a0823815809d510
-#http://img1.money.126.net/data/hs/time/today/0000001.json
+
 class SocietyNews():
     def __init__(self):
         self.infos    = []                                        #信息存储，元素为字典
@@ -29,6 +28,10 @@ class SocietyNews():
             #'guokr'   :[self.site15,'https://www.guokr.com/science/category/all'], 
             #'banyue'  :[self.site16,'http://www.banyuetan.org'], 
             #'qbits'   :[self.site17,'https://www.qbitai.com'], 
+            #'fenghug' :[self.site18,'http://news.ifeng.com'], 
+            #'xinhua'  :[self.site19,'http://www.xinhuanet.com'], 
+            #'chinad'  :[self.site20,'http://language.chinadaily.com.cn/trans_collect'], 
+            #'people'  :[self.site21,'http://www.people.com.cn'], 
             'technolg':[self.site3 , 'http://tech.feng.com'],
             'medicing':[self.site7 , 'http://www.bioon.com'],
             'stockmak':[self.site2 , 'http://quotes.money.163.com/stock'],
@@ -350,8 +353,18 @@ class SocietyNews():
 
     def site15(self, soup):
         '''果壳网'''
+        dvs = soup.find('div', attrs={"class":"panel-article"})
+        div = dvs[randint(0,len(dvs)-1)]
         
-
+        img = div.find('img')
+        iul = img['src']
+        
+        div = div.find('div', attrs={"class":"styled__InfoWrap-sc"})
+        dvs = div.find_all('div')
+        ttl = str(dvs[0].getText().strip())
+        url = self.urls['guokr'][1]
+        self.infos.append({ 'url':url, 'iul':iul, 'ttl':ttl+'<br>'})
+        #all science funny life health humanities nature digital food
 
     def site16(self, soup):
         '''半月谈'''
@@ -379,6 +392,63 @@ class SocietyNews():
 
         h4  = div.find('h4')
         a   = h4.find('a')
+        url = a['href']
+        ttl = str(a.getText().strip())
+        self.infos.append({ 'url':url, 'iul':iul, 'ttl':ttl+'<br>'})
+
+    def site18(self, soup):
+        '''凤凰资讯'''
+        div = soup.find('div', attrs={"class":"container-3J0fgyFB"})
+        dvs = div.find_all('div')
+        div = dvs[randint(0,len(dvs)-1)]
+        a   = div.find('a')
+
+        url = 'http:' + a['href']
+        img = div.find('img')
+        iul = 'http:' + img['src']
+        ttl = img['alt']
+        self.infos.append({ 'url':url, 'iul':iul, 'ttl':ttl+'<br>'})
+
+    def site19(self, soup):
+        '''新华网'''
+        div = soup.find('div', attrs={"class":"focusBoxWrap"})
+        lis = div.find_all('li')
+        li  = lis[randint(0,len(lis)-1)]
+
+        a   = li.find('a')
+        url = a['href']
+        img = a.find('img') 
+        iul = img['src']
+        ttl = 'http://news.ifeng.com/' + img['alt']
+        self.infos.append({ 'url':url, 'iul':iul, 'ttl':ttl+'<br>'})
+        
+    def site20(self, soup):
+        '''中国日报双语'''
+        pag = randint(1,103)
+        tul = self.urls['chinad'][1] + '/page_%d.html'%pag
+        soup = elf.getSoup(tul)
+        div = soup.find('div', attrs={"class":"content_left"})
+        dvs = div.find_all('div', attrs={"class":"gy_box"})
+        div = dvs[randint(0,len(dvs)-1)]
+        
+        img = div.find('img')
+        iul = 'http:' + img['src']
+
+        aa  = div.find_all('a')
+        url = 'http:' + aa[1]['href']
+        ttl = str(aa[1].getText().strip())
+        self.infos.append({ 'url':url, 'iul':iul, 'ttl':ttl+'<br>'})
+
+    def site21(self, soup):
+        '''人民日报'''
+        div = soup.find('div', attrs={"id":"focus_list"})
+        lis = div.find_all('li')
+        li  = lis[randint(0,len(lis)-1)]
+
+        img = li.find('img')
+        iul = self.urls['people'][1] + img['src']
+        aa  = li.find_all('a')
+        a   = aa[1]
         url = a['href']
         ttl = str(a.getText().strip())
         self.infos.append({ 'url':url, 'iul':iul, 'ttl':ttl+'<br>'})
@@ -439,16 +509,18 @@ if __name__ == "__main__":
 
     #kind = 'netease'
     #url  = 'http://quotes.money.163.com/stock'
+    kind = 'guokr'
+    url = 'https://www.guokr.com/science/category/all'
 
     spider = SocietyNews()
-    spider.downloadInfos()
+    #spider.downloadInfos()
     #spider.multidownloadInfos()
-    #spider.getHtml(kind, url)
+    spider.getHtml(kind, url)
     #spider.printinfo()
 
-    spider.writePreSuf(pref, name, 'w')
-    spider.writeInfo2html(name)
-    spider.writePreSuf(suff, name, 'a')
+    #spider.writePreSuf(pref, name, 'w')
+    #spider.writeInfo2html(name)
+    #spider.writePreSuf(suff, name, 'a')
 
     #options = webdriver.FirefoxOptions()
     #options.add_argument('--headless')
