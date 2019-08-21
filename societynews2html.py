@@ -9,45 +9,42 @@ import requests
 from bs4 import BeautifulSoup as Soup
 from random import randint
 from multiprocessing import Pool
+from selenium import webdriver
 
 class SocietyNews():
-    def __init__(self):
-        self.infos    = []                                        #信息存储，元素为字典
-        self.mlsufix  = 'mail.html'                               #html后缀名
+    def __init__(self, driver):
+        self.infos    = []          #信息存储，元素为字典
+        self.driver   = driver 
+        self.mlsufix  = 'mail.html' #html后缀名
         self.headers  = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) \
              AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36',
             'Connection':'close'
             }
-        self.urls     = {                                         #将函数和网站绑定
-            #'mtime'   :[self.site13,'http://www.mtime.com'], 
-            'newbook' :[self.site0 , 'https://book.douban.com'],
-            'hotsong' :[self.site1 , 'https://music.163.com/discover/toplist'],
-            'perfect' :[self.site12,'http://www.fsdpp.cn'], 
-            #'donews'  :[self.site11,'http://www.donews.com/article/show_recommend'], 
-            #'guokr'   :[self.site15,'https://www.guokr.com/science/category/all'], 
+        self.urls     = {           #将函数和网站绑定，以便于随意安放次序
+            #'doubanmv':[self.site13,'https://movie.douban.com'], 
+            #'newbook' :[self.site0 , 'https://book.douban.com'],
+            #'hotsong' :[self.site1 , 'https://music.163.com/discover/toplist'],
+            #'perfect' :[self.site12,'http://www.fsdpp.cn'], 
+            #''  :[self.site11,'http:'], 
+            'guokr'   :[self.site15,'https://www.guokr.com/science/category/all'], 
             #'banyue'  :[self.site16,'http://www.banyuetan.org'], 
             #'qbits'   :[self.site17,'https://www.qbitai.com'], 
             #'fenghug' :[self.site18,'http://news.ifeng.com'], 
             #'xinhua'  :[self.site19,'http://www.xinhuanet.com'], 
             #'chinad'  :[self.site20,'http://language.chinadaily.com.cn/trans_collect'], 
             #'people'  :[self.site21,'http://www.people.com.cn'], 
-            'technolg':[self.site3 , 'http://tech.feng.com'],
-            'medicing':[self.site7 , 'http://www.bioon.com'],
-            'stockmak':[self.site2 , 'http://quotes.money.163.com/stock'],
-            'finance' :[self.site5 , 'http://economy.caixin.com'],
-            'company' :[self.site14, 'http://companies.caixin.com'],
-            '21centay':[self.site9 , 'http://www.21jingji.com'],
-            'society' :[self.site6 , 'http://news.cctv.com/society'],
-            'entrtain':[self.site8 , 'https://ent.sina.com.cn'],
-            'polictal':[self.site4 , 'http://www.huanqiu.com'],
-            'zhjiwei' :[self.site10,'http://www.ccdi.gov.cn/scdc'],
+            #'technolg':[self.site3 , 'http://tech.feng.com'],
+            #'medicing':[self.site7 , 'http://www.bioon.com'],
+            #'stockmak':[self.site2 , 'http://quotes.money.163.com/stock'],
+            #'finance' :[self.site5 , 'http://economy.caixin.com'],
+            #'company' :[self.site14, 'http://companies.caixin.com'],
+            #'21centay':[self.site9 , 'http://www.21jingji.com'],
+            #'society' :[self.site6 , 'http://news.cctv.com/society'],
+            #'entrtain':[self.site8 , 'https://ent.sina.com.cn'],
+            #'polictal':[self.site4 , 'http://www.huanqiu.com'],
+            #'zhjiwei' :[self.site10,'http://www.ccdi.gov.cn/scdc'],
             }
-        self.idx_urls = [
-            ['http://img1.money.126.net/data/hs/time/today/0000001.json','上证指数'],
-            ['http://img1.money.126.net/data/hs/time/today/1399001.json','深证成指'],
-            ['http://img1.money.126.net/data/hs/time/today/1399006.json','创业板指']
-            ]
 
     def readHtml(self, name):
         with open(name) as fobj:
@@ -57,37 +54,42 @@ class SocietyNews():
 
     def saveHtml(self, name, resp):
         with open(name, 'w') as fobj:
-            fobj.write(str(resp.text))
+            fobj.write(str(resp.content))
 
-    def getHtmldriver(self, kind, url, dirver):
+    def getHtmldriver(self, kind, url, driver):
         try:
             name = kind + '.html' 
             driver.get(url)
             resp = driver.page_source
-            self.saveHtml(name, resp)
+            with open(name, 'w') as fobj:
+                fobj.write(resp)
         except Exception as err:
-            pass
+            pass 
+            print(err)
 
     def getHtml(self, kind, url):
-        headers = {
-            'Referer':url,
-            'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) \
-             AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36',
-            'Connection':'close'
-            }
         try:
             name = kind + '.html' 
-            resp = requests.get(url,headers=headers)
+            resp = requests.get(url, headers=self.headers)
             if 200 == resp.status_code:
                 resp.encoding = 'utf-8'
                 self.saveHtml(name, resp)
+            else:
+                print('Failue')
         except Exception as err:
-            pass
+            print(err)
 
-    def getSoup(self, url):
+    def getSoup(self, url, drive=False):
         '''获取网页信息'''
         soup = []
         try:
+            if drive:
+                self.driver.get(url)
+                resp = self.driver
+                soup = Soup(resp)
+                self.driver.close()
+                return soup
+
             resp = requests.get(url,headers=self.headers)
             if 200 == resp.status_code:
                 resp.encoding = 'utf-8'
@@ -148,16 +150,29 @@ class SocietyNews():
 
     def site2(self, soup):
         '''网易股市行情'''
-        def getStockData(iurl):
-            resp = requests.get(iurl[0],headers=self.headers)
-            jdic = json.loads(resp.content)
-            data = jdic['data']
-            yst = jdic['yestclose']
-            ops = data[0][1]
-            cur = data[-1][1]
-            chg = cur - yst
-            pct = round(100*(chg/yst), 2)
-            tmp = '%s：%.2f|%.2f|%.2f|%.2f|%.2f%%<br>'%(iurl[1], yst, ops, cur, chg, pct)
+        def getStockData():
+            idx_urls = [
+            ['http://img1.money.126.net/data/hs/time/today/0000001.json','上证指数'],
+            ['http://img1.money.126.net/data/hs/time/today/1399001.json','深证成指'],
+            ['http://img1.money.126.net/data/hs/time/today/1399006.json','创业板指']
+            ]
+            tmp = ''
+            for iurl in idx_urls:
+                resp = requests.get(iurl[0],headers=self.headers)
+                jdic = json.loads(resp.content)
+                data = jdic['data']
+                yst = jdic['yestclose']
+                ops = data[0][1]
+                cur = data[-1][1]
+                chg = cur - yst
+                pct = round(100*(chg/yst), 2)
+
+                if pct > 0:
+                    pct = '+' + str(pct) 
+                else:
+                    pct = str(pct)
+                tmp += '%s：%.2f|%.2f|%.2f|%.2f|%s%%<br>'%(iurl[1], yst, ops, cur, chg, pct)
+
             return tmp
 
         div = soup.find('div', attrs={"class":"thumbnails thumbnail-point fetch-content"})
@@ -169,9 +184,8 @@ class SocietyNews():
         url = self.urls['stockmak'][1] 
         ttl = '沪深股市行情 [昨收，今开，现值，涨跌，涨跌比]<br>'
 
-        for iurl in self.idx_urls:
-            tmp  = getStockData(iurl)
-            ttl += tmp
+        tmp  = getStockData()
+        ttl += tmp
 
         self.infos.append({ 'url':url, 'iul':iul, 'ttl':ttl})
 
@@ -292,20 +306,6 @@ class SocietyNews():
         iul = 'https://s2.ax1x.com/2019/08/20/mYJHSJ.png'
         self.infos.append({ 'url':url, 'iul':iul, 'ttl':ttl+'<br>'})
 
-    def site11(self, soup):
-        '''donews'''
-        div = soup.find('div', attrs={"class":"block ng-scope"})
-        dls = div.find_all('dl')
-        dl  = dls[randint(0,len(dls)-1)]
-        a   = dl.find('a')
-
-        url = a['href']
-        img = a.find('img')
-        iul = img['src']
-        h3  = dl.find('h3')
-        ttl = str(h3.getText().strip())
-        self.infos.append({ 'url':url, 'iul':iul, 'ttl':ttl+'<br>'})
-
     def site12(self, soup):
         '''perfect idears'''
         ul  = soup.find('ul', attrs={"id":"menu"})
@@ -328,27 +328,25 @@ class SocietyNews():
         self.infos.append({ 'url':url, 'iul':iul, 'ttl':ttl+'<br>'})
 
     def site13(self, soup):
-        '''movies'''
-        lis = soup.find('lis', attrs={"class":"mbor-item"})
-        li  = lis[randint(0,len(lis)-1)]
-        a   = li.find('a')
-
-        img = li.find('img')
-        iul = img['src']
-
-        rak = ls.find('i') #,attrs={"class":"moviegrade"})
-        scr = '总评分：' + str(rak.getText().strip()) + '<br>'
-         
-        div = li.find('div', attrs={"class":"text"})
-        a   = div.find('a')
-
+        '''douban movies'''
+        div = soup.find('div', attrs={"class":"billboard-bd"})
+        trs = div.find_all('tr')
+        tr  = trs[randint(0,len(trs)-1)]
+        a   = tr.find('a')
         url = a['href']
-        ttl = '票房榜：' + str(a.getText().strip()) + '<br>'
+        ttl = str(a.getText().strip())
 
-        ps  = div.find_all('p')
-        day = '日票房：' + str(ps[0].getText().strip()) + '<br>'
-        tot = '总票房：' + str(ps[1].getText().strip())
-        ttl = ttl +  scr + day + tot 
+        soup = self.getSoup(url)
+        div  = soup.find('div', attrs={"class":"subjectwrap clearfix"})
+        dv1  = div.find('div', attrs={"class":"suject clearfix"})
+        img  = dv1.find('img')
+        iul  = img['src']
+        
+        dv1  = div.find('div', attrs={"id":"interest_sectl"})
+        stg  = dv1.find('strong',attrs={"class":"ll rating_num"})
+        rate = str(stg.getText().strip())
+        ttl = '荐电影：' + ttl + '<br>' + '总评分：' + rate
+
         self.infos.append({ 'url':url, 'iul':iul, 'ttl':ttl+'<br>'})
 
     def site15(self, soup):
@@ -461,7 +459,7 @@ class SocietyNews():
                     continue
                 item[0](soup)           #核心函数
             except Exception as err:
-                pass
+                print(err)
 
     def combinefunc(self, item):
         soup = self.getSoup(item[1])
@@ -507,15 +505,20 @@ if __name__ == "__main__":
     pref = 'Societynewspre.html'
     suff = 'Societynewssuf.html'
 
-    #kind = 'netease'
-    #url  = 'http://quotes.money.163.com/stock'
-    kind = 'guokr'
-    url = 'https://www.guokr.com/science/category/all'
+    options = webdriver.FirefoxOptions()
+    options.add_argument('--headless')
+    driver = webdriver.Firefox()
+    #driver.set_page_load_timeout(10)
 
-    spider = SocietyNews()
+    spider = SocietyNews(driver)
+    kind = 'guokr'
+    url  = 'https://www.guokr.com/science/category/all'
     #spider.downloadInfos()
+    #spider.getHtml(kind, url)
+    spider.getHtmldriver(kind, url, driver)
+    #driver.close()
     #spider.multidownloadInfos()
-    spider.getHtml(kind, url)
+    #spider.getHtml(kind, url)
     #spider.printinfo()
 
     #spider.writePreSuf(pref, name, 'w')
@@ -529,3 +532,34 @@ if __name__ == "__main__":
     #driver = webdriver.Firefox(firefox_options=options)
     #driver.set_page_load_timeout(10)
     #driver.clost()
+    #财经 
+    #政治 
+    #社会
+    #歌曲 
+    #书籍 
+    #电影
+    #股市 
+    #服装 
+    #汽车 
+    #科技 
+    #电信 
+    #时尚 
+    #奢侈品 
+    #设计 
+    #旅游
+    #推荐 
+    #美食
+    #酒店
+    #介绍 
+    #服务 
+    #广告 
+    #航天 
+    #健康
+    #医疗 
+    #健身 
+    #教育 
+    #计算机 
+    #地震统计
+    #死亡人数 
+    #出生人数 
+    #总人口数
