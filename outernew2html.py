@@ -1,11 +1,8 @@
 #!/usr/bin/python3
 # coding: utf-8
 
-import os
-import re
-import sys
-import json
-import time
+import os, re, sys 
+import json, time
 import requests
 from bs4 import BeautifulSoup as Soup
 from random import randint
@@ -48,11 +45,9 @@ class SocietyNews():
             #'travelad':[self.site24,'https://www.travelandleisure.com',False],
             #'ciowebsi':[self.site25,'https://www.cio.com',False],
             #'computew':[self.site26,'https://www.computerworld.com',False],
+            #'outdoord':[self.site27,'https://www.outdoorlife.com',False],
+            #'thetimes':[self.site28,'https://www.thetimes.co.uk',False],
             }
-
-    def saveHtml(self, name, resp):
-        with open(name, 'w') as fobj:
-            fobj.write(str(resp.text))
 
     def getHtml(self, kind, url):
         try:
@@ -60,7 +55,8 @@ class SocietyNews():
             resp = requests.get(url, headers=self.headers)
             if 200 == resp.status_code:
                 resp.encoding = 'utf-8'
-                self.saveHtml(name, resp)
+                with open(name, 'w') as fobj:
+                    fobj.write(str(resp.text))
             else:
                 print('Failue')
         except Exception as err:
@@ -99,18 +95,20 @@ class SocietyNews():
         img = a.find('img')
         iul = 'https:' + img['src']
         h2  = arc.find('h2')
-        a   = h2.find('a')
-        ttl = str(a.getText().strip())
+        ttl = str(h2.getText().strip())
         self.infos.append({ 'url':url, 'iul':iul, 'ttl':ttl+'<br>'})
 
+        #a   = h2.find('a')
+        #ttl = str(a.getText().strip())
+
     def site03(self, soup):
-        '''xxxx'''
+        '''animalfun'''
         dvs = soup.find_all('div',attrs={"class":"ImageBlock ImageBlockCenter"})
         div = dvs[randint(0,len(dvs)-1)]
 
+        url = self.urls['animalfu'][1]
         img = div.find('img')
         iul = img['data-pin-media']
-        url = self.urls['animalfu'][1]
         ttl = 'Animal'
         self.infos.append({ 'url':url, 'iul':iul, 'ttl':ttl+'<br>'})
 
@@ -122,10 +120,12 @@ class SocietyNews():
 
         url = a['href']
         ttl = a['aria-label']
+
         div = div.find('div',attrs={"class":"preview__image"})
         stl = div['style']
         img = imp.search(stl)
         iul = img.group(1) 
+
         self.infos.append({ 'url':url, 'iul':iul, 'ttl':ttl+'<br>'})
 
     def site05(self, soup):
@@ -484,7 +484,7 @@ class SocietyNews():
     def site26(self, soup):
         '''computerworld'''
         div = soup.find('div',attrs={"homepage-crawl"})
-        dvs = div.find_all("class":"crawl-item content-item content"})
+        dvs = div.find_all('div',attrs={"class":"crawl-item content-item content"})
         div = dvs[randint(0,len(dvs)-1)]
 
         img = div.find('img')
@@ -493,6 +493,32 @@ class SocietyNews():
         a   = h3.find('a')
         url = self.urls['computew'][1] +  a['href']
         ttl = str(a.getText().strip())
+        self.infos.append({ 'url':url, 'iul':iul, 'ttl':ttl+'<br>'})
+
+    def site27(self, soup):
+        '''outdoordesign'''
+        ul  = div.find('ul', attrs={"feed_driven_flex_feature"})
+        lis = ul.find_all('li')
+        li  = lis[randint(0,len(lis)-1)]
+        div = li.find('div',attrs={"class":"headline"})
+        a   = div.find('a')
+        url =  self.urls['outdoord'][1] +  a['href']
+        ttl = str(a.getText().strip())
+        img = li.find('img')
+        iul = img['src']
+        self.infos.append({ 'url':url, 'iul':iul, 'ttl':ttl+'<br>'})
+
+    def site28(self, soup):
+        '''thetimes'''
+        imp = re.compile(r'url\('.*'\)')
+        div = soup.find('div',attrs={"class":"ConversionItem is-selected"})
+        dvt = div.find('div', attrs={"class":"ConversionItem-imageBackground"})
+        stl = dvt['style']
+        img = imp.search(stl)
+        iul = 'https:' + img.group(1)
+        h2  = div.find('h2')
+        ttl = str(h2.getText().strip())
+        url = self.urls['thetimes'][1]
         self.infos.append({ 'url':url, 'iul':iul, 'ttl':ttl+'<br>'})
 
     def downloadInfos(self):
@@ -544,7 +570,7 @@ if __name__ == "__main__":
  
     
     kind = 'it'
-    url = 'https://www.computerworld.com'
+    url = 'https://www.thetimes.co.uk'
     spider = SocietyNews()
     spider.getHtml(kind, url)
     #spider.downloadInfosT()
