@@ -1,3 +1,8 @@
+------------
+# 兼容系统 #
+------------
+	Unix-like OS
+
 --------
 # 描述 #
 -------
@@ -23,7 +28,7 @@ Linux下获取豆瓣不同种类书籍信息并整理成书单(pdf格式)。许�
 	  $ sudo mkdir /home/username/file/booklist/
 	3.修改Booklist/booklist.py的self.save_fold(第23行)为上述目录(注意最后的斜杠要加上) 
 	4.将category.csv放入上述目录
-	  $ mv booklist/category.csv /home/username/file/booklist/
+	  $ mv Booklist/category.csv /home/username/file/booklist/
 	5.执行
 	  $ python3 booklist.py
 	6.最后
