@@ -161,16 +161,16 @@ class DoubanBookList():
             return False
 
         txtname = ''.join([self.storedir,basename(url),'.txt'])
-        with open(txtname,'w') as txtObj:
+        with open(txtname,'w',encoding= 'utf-8') as txtObj:
             txtObj.write(''.join([' '*42,self.heading,'(',basename(url),')','\n'])) #标题
             txtObj.write(''.join([' '*29,self.author,self.datetime,'\n']))          #时间
             for i, infodic in enumerate(bookinfos, 1):
-                txtObj.write(''.join([str(i),'\n']))                              #书籍序号
+                txtObj.write(''.join([str(i),'\n']))                             #书籍序号
                 txtObj.write(''.join(['　　书名：', infodic['title'], '\n']))
                 txtObj.write(''.join(['　　作者：', infodic['authr'], '\n']))
                 txtObj.write(''.join(['　　评分：', infodic['score'], '\n']))
                 txtObj.write(''.join(['　　简介：', infodic['descs'], '\n']))
-                txtObj.write('\n')                                                  #书间空行
+                txtObj.write('\n')                                               #书间空行
 
     def saveBookList(self,url,proxy):
         '''获取书籍信息并保存'''
@@ -210,7 +210,7 @@ class DoubanBookList():
     def save2csv(self,urls):
         csvname  = self.storedir + 'category.csv'
         if not exists(csvname):
-            with open(csvname,'w',newline='') as csvObj:
+            with open(csvname,'w',newline='', encoding='utf-8') as csvObj:
                 csv_writer = csv.writer(csvObj,dialect='excel')
                 for i,url in enumerate(urls):
                     csv_writer.writerow([i,url])
