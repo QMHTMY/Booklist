@@ -164,8 +164,8 @@ class DoubanBookList():
         with open(txtname,'w') as txtObj:
             txtObj.write(''.join([' '*42,self.heading,'(',basename(url),')','\n'])) #标题
             txtObj.write(''.join([' '*29,self.author,self.datetime,'\n']))          #时间
-            for i, infodic in enumerate(bookinfos):
-                txtObj.write(''.join([str(i+1),'\n']))                              #书籍序号
+            for i, infodic in enumerate(bookinfos, 1):
+                txtObj.write(''.join([str(i),'\n']))                              #书籍序号
                 txtObj.write(''.join(['　　书名：', infodic['title'], '\n']))
                 txtObj.write(''.join(['　　作者：', infodic['authr'], '\n']))
                 txtObj.write(''.join(['　　评分：', infodic['score'], '\n']))
