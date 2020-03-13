@@ -4,22 +4,8 @@
 #    Author: Shieber
 #    Date: 2019.07.23
 #
-#                             APACHE LICENSE
-#    Licensed under the Apache License, Version 2.0 (the "License"); you may
-#    not use this file except in compliance with the License. You may obtain
-#    a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
-#    Unless required by applicable law or agreed to in writing, software
-#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-#    License for the specific language governing permissions and limitations
-#    under the License.
-#
-#                            Function Description
 #    下载豆瓣图书分类标签并生成各分类书籍阅读书单
 #
-#    Copyright 2019 
-#    All Rights Reserved!
-
 import re,time,csv
 import random
 import requests
@@ -62,12 +48,12 @@ class DoubanBookList():
         '''获取当前日期'''
         time = datetime.datetime.now()
         if time.month < 10:
-            mnth = ''.join(['0',str(time.month)])  
+            mnth = '0'+str(time.month)
         else:
             mnth = str(time.month)
 
         if time.day < 10:
-            day  = ''.join(['0',str(time.day)])  
+            day  = '0'+str(time.day)
         else:
             day  = str(time.day)
 
@@ -209,11 +195,13 @@ class DoubanBookList():
 
     def save2csv(self,urls):
         csvname  = self.storedir + 'category.csv'
-        if not exists(csvname):
-            with open(csvname,'w',newline='', encoding='utf-8') as csvObj:
-                csv_writer = csv.writer(csvObj,dialect='excel')
-                for i,url in enumerate(urls):
-                    csv_writer.writerow([i,url])
+        if exists(csvname):
+            return
+
+        with open(csvname,'w',newline='', encoding='utf-8') as csvObj:
+            csv_writer = csv.writer(csvObj,dialect='excel')
+            for i,url in enumerate(urls):
+                csv_writer.writerow([i,url])
 
     def readFromcsv(self,csvname):
         bookurls = []
@@ -254,15 +242,14 @@ class DoubanBookList():
         else:
             resp = requests.get(url,headers=self.headers)
 
-        if 200 == resp.status_code:
-            resp.encoding = 'utf-8'
-            soup = Soup(resp.content,'html.parser')
-            if soup:
-                return soup
-            else:
-                return []
-        else:
+        if 200 != resp.status_code:
             return []
+
+        resp.encoding = 'utf-8'
+        soup = Soup(resp.content,'html.parser')
+        if not soup:
+            soup = []
+        return soup
 
 if __name__ == "__main__":
     #s起始书单序列号，e截止书单序列号 (s最小1,e最大145)，multi:多线程，proxy:ip代理

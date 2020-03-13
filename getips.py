@@ -4,21 +4,7 @@
 #    Author: Shieber
 #    Date: 2019.07.23
 #
-#                             APACHE LICENSE
-#    Licensed under the Apache License, Version 2.0 (the "License"); you may
-#    not use this file except in compliance with the License. You may obtain
-#    a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
-#    Unless required by applicable law or agreed to in writing, software
-#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-#    License for the specific language governing permissions and limitations
-#    under the License.
-#
-#                            Function Description
 #    获取ip，构建代理池
-#
-#    Copyright 2019 
-#    All Rights Reserved!
 
 import re
 import urllib
@@ -41,7 +27,7 @@ def getIpList(url):
     tbody = table.find('tbody')
     trs   = tbody.find_all('tr')
 
-    ip_list   = []
+    iplst   = []
     patn = re.compile(r'check.html')
     for tr in trs:
         info = tr.find('a',href=patn)
@@ -49,10 +35,10 @@ def getIpList(url):
             ip = str(info.getText())
             ip = ip.strip()
             if ip:
-                ip_list.append('http://'+ip)
+                iplst.append('http://'+ip)
 
-    ip_list = checkip(url,ip_list)
-    return ip_list
+    iplst = checkip(url,iplst)
+    return iplst
 
 def checkip(url,ip_list):
     for ip in ip_list:
