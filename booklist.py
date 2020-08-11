@@ -18,7 +18,7 @@ from subprocess import call
 from multiprocessing import Pool
 
 
-class DoubanBookList():
+class DoubanBookListDownloader():
     '''豆瓣图书分类生产器'''
     def __init__(self,author='Shieber'):
         self.proxy_url= 'https://ip.ihuan.me/'
@@ -69,7 +69,7 @@ class DoubanBookList():
             info = '暂无'
         return info
 
-    def getInfo(self,soup):
+    def getItemInfo(self,soup):
         if not soup:
             return []
 
@@ -101,16 +101,16 @@ class DoubanBookList():
         for url in pageurls:
             proxies = getRandomIp(self.ip_list)
             soup = self.getFromUrl(url,proxy,proxies)
-            info = self.getInfo(soup)
+            info = self.getItemInfo(soup)
             bookinfo += info
         return bookinfo 
 
-    def getInfoPlusPageUrls(self,url):
+    def getItemInfoPlusPageUrls(self,url):
         soup = self.getFromUrl(url,proxy=False)
         if not soup:
             return [],[]
 
-        bookinfo = self.getInfo(soup)
+        bookinfo = self.getItemInfo(soup)
 
         pageurls = []
         pagenums = soup.find_all('a',href=re.compile(r'/tag/.*?start=\d+&type=T'))
@@ -160,12 +160,12 @@ class DoubanBookList():
 
     def saveBookList(self,url,proxy):
         '''获取书籍信息并保存'''
-        bookinfo1, pageurls = self.getInfoPlusPageUrls(url)
+        bookinfo1, pageurls = self.getItemInfoPlusPageUrls(url)
         bookinfo2 = self.getBookInfo(pageurls,proxy)
         bookinfos = bookinfo1 + bookinfo2
         self.save2Txt(url,bookinfos)
 
-    def multiSave(self,urls,s=1,e=145,multi=False,proxy=False):
+    def multiDownloadAndSave(self,urls,s=1,e=145,multi=False,proxy=False):
         '''多进程循环获取所有书籍信息并保存'''
         if urls:
             if 0< e < len(urls):
@@ -254,9 +254,9 @@ class DoubanBookList():
 if __name__ == "__main__":
     #s起始书单序列号，e截止书单序列号 (s最小1,e最大145)，multi:多线程，proxy:ip代理
     #Step I 下载书籍信息到txt文件
-    booklist = DoubanBookList()              
+    booklist = DoubanBookListDownloader()              
     cateurls = booklist.getBookCateUrls() 
-    success  = booklist.multiSave(cateurls,s=1,e=len(cateurls),multi=True,proxy=False) 
+    success  = booklist.multiDownloadAndSave(cateurls,s=1,e=len(cateurls),multi=True,proxy=False) 
 
     #Step II 转换txt为pdf并删除中间文件
     start = time.time()
